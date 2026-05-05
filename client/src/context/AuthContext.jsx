@@ -7,20 +7,19 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔹 Load user on app start
   useEffect(() => {
-    const fetchUser = async () => {
+    const loadUser = async () => {
       try {
-        const res = await axios.get("/current-user");
+        const res = await API.get("/current-user");
         setUser(res.data.data);
-      } catch (error) {
+      } catch (err) {
         console.log("Not logged in");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUser();
+    loadUser();
   }, []);
 
   // 🔹 Register

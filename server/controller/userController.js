@@ -40,7 +40,9 @@ export const register = asyncHandler(async (req, res) => {
     role: role || "member",
   });
 
-  const createdUser = await User.findById(user._id).select("-password");
+  const createdUser = await User.findById(user._id).select(
+    "-password -refreshToken -otp"
+  );
 
   return res
     .status(201)
@@ -74,7 +76,9 @@ export const loginUser = asyncHandler(async (req, res) => {
 
   const options = {
     httpOnly: true,
-    secure: true,
+    secure: false, // ✅ MUST be false on localhost
+    sameSite: "lax", // ✅ important
+    maxAge: 30 * 24 * 60 * 60 * 1000,
   };
 
   return res
@@ -86,10 +90,8 @@ export const loginUser = asyncHandler(async (req, res) => {
         200,
         {
           user: loggedInUser,
-          accessToken,
-          refreshToken,
         },
-        "Login successful"
+        "User logged in successfully"
       )
     );
 });

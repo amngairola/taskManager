@@ -42,8 +42,10 @@ api.interceptors.response.use(
           { withCredentials: true }
         );
 
-        const { accessToken } = response.data.data;
+        const { accessToken, user } = response.data.data;
+
         localStorage.setItem("accessToken", accessToken);
+
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {

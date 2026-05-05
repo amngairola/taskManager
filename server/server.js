@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 
+import cookieParser from "cookie-parser";
 import userRouter from "./routes/userRoutes.js";
 
 const app = express();
@@ -18,6 +19,7 @@ app.get("/", (req, res) => {
   res.send("API running...");
 });
 
+app.use(cookieParser());
 app.use("/api", userRouter);
 
 export default app;

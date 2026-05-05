@@ -1,39 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import API from "../context/axios";
+
 import { Link } from "react-router-dom";
+import api from "./../context/axios";
 
 export default function Dashboard() {
   const { user, isAdmin, loading } = useAuth();
 
   const [projects, setProjects] = useState([]);
-  const [stats, setStats] = useState({
-    total: 0,
-    completed: 0,
-    overdue: 0,
-  });
-
   const [pageLoading, setPageLoading] = useState(true);
 
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+  });
+
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchProjects = async () => {
       try {
-        // 🔹 Fetch projects
-        const projectRes = await API.get("/projects");
-        const projectData = projectRes.data.data;
-        setProjects(projectData);
-
-        // 🔹 Fetch tasks for stats (optional but good)
-        const tasksRes = await API.get("/tasks?projectId=");
-        const tasks = tasksRes.data.data;
-
-        const total = tasks.length;
-        const completed = tasks.filter((t) => t.status === "done").length;
-        const overdue = tasks.filter(
-          (t) => new Date(t.dueDate) < new Date() && t.status !== "done"
-        ).length;
-
-        setStats({ total, completed, overdue });
+        const res = await api.get("/projects");
+        setProjects(res.data.data);
       } catch (err) {
         console.log(err);
       } finally {
@@ -41,60 +28,111 @@ export default function Dashboard() {
       }
     };
 
-    fetchData();
+    fetchProjects();
   }, []);
 
+  // 🔹 Handle Form Input
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  // 🔹 Create Project
+  const handleCreateProject = async (e) => {
+    e.preventDefault();
+
+    if (!form.title) return alert("Title required");
+
+    try {
+      const res = await api.post("/projects", form);
+
+      setProjects((prev) => [res.data.data, ...prev]);
+
+      setForm({ title: "", description: "" });
+      setShowForm(false);
+    } catch (err) {
+      console.log(err);
+      alert("Failed to create project");
+    }
+  };
+
   if (loading || pageLoading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
-        <p>Loading...</p>
-      </div>
-    );
+    return <div className="text-center mt-10">Loading...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-slate-950 text-white">
       {/* Navbar */}
-      <nav className="border-b border-slate-800 bg-slate-900 px-6 py-4 flex justify-between">
-        <h1 className="text-xl font-bold">Dashboard</h1>
+      <nav className="flex justify-between p-4 bg-slate-900">
+        <h1>Dashboard</h1>
         <span>{user?.name}</span>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* 🔹 Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-slate-900 p-4 rounded">
-            Total Tasks: {stats.total}
-          </div>
-          <div className="bg-slate-900 p-4 rounded">
-            Completed: {stats.completed}
-          </div>
-          <div className="bg-slate-900 p-4 rounded">
-            Overdue: {stats.overdue}
-          </div>
-        </div>
-
-        {/* 🔹 Projects */}
+      <main className="p-6">
+        {/* 🔹 Header */}
         <div className="flex justify-between mb-6">
           <h2>Projects</h2>
 
           {isAdmin && (
-            <button className="bg-indigo-600 px-4 py-2 rounded">
+            <button
+              onClick={() => setShowForm(true)}
+              className="bg-indigo-600 px-4 py-2 rounded"
+            >
               + New Project
             </button>
           )}
         </div>
 
+        {/* 🔹 Modal Form */}
+        {showForm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+            <form
+              onSubmit={handleCreateProject}
+              className="bg-slate-900 p-6 rounded w-96"
+            >
+              <h3 className="mb-4 text-lg">Create Project</h3>
+
+              <input
+                name="title"
+                placeholder="Project title"
+                value={form.title}
+                onChange={handleChange}
+                className="w-full mb-3 p-2 bg-slate-800"
+                required
+              />
+
+              <textarea
+                name="description"
+                placeholder="Description"
+                value={form.description}
+                onChange={handleChange}
+                className="w-full mb-3 p-2 bg-slate-800"
+              />
+
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="bg-gray-600 px-3 py-1"
+                >
+                  Cancel
+                </button>
+
+                <button type="submit" className="bg-indigo-600 px-3 py-1">
+                  Create
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* 🔹 Projects */}
         <div className="grid md:grid-cols-3 gap-4">
           {projects.map((project) => (
             <div key={project._id} className="bg-slate-900 p-4 rounded">
-              <h3 className="text-lg">{project.title}</h3>
+              <h3>{project.title}</h3>
               <p className="text-sm text-slate-400">{project.description}</p>
 
-              <Link
-                to={`/project/${project._id}`}
-                className="text-indigo-400 text-sm"
-              >
+              <Link to={`/project/${project._id}`} className="text-indigo-400">
                 View →
               </Link>
             </div>
