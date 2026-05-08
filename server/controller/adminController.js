@@ -1,6 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.utils.js";
-import { ApiResponse } from "../utils/apiResponse.js";
-import { ApiError } from "../utils/apiError.js";
+import ApiRes from "../utils/ApiRes.utils.js";
+import ApiError from "../utils/apiErr.utils.js";
+
 import { Task } from "../models/task.model.js";
 import { Project } from "../models/project.model.js";
 
@@ -22,7 +23,9 @@ export const createProject = asyncHandler(async (req, res) => {
 });
 
 export const createTask = asyncHandler(async (req, res) => {
-  const { title, description, projectId, assignedTo, dueDate } = req.body;
+  const { title, description, projectId, assignedTo, dueDate, status } =
+    req.body;
+  console.log("Backednd----------", req.body);
 
   if (!title || !projectId) {
     throw new ApiError(400, "Title & projectId required");
@@ -40,6 +43,7 @@ export const createTask = asyncHandler(async (req, res) => {
     description,
     projectId,
     assignedTo,
+    status,
     dueDate,
   });
 
@@ -60,7 +64,7 @@ export const deleteTask = asyncHandler(async (req, res) => {
 
   await task.deleteOne();
 
-  res.json(new ApiResponse(200, null, "Task deleted"));
+  res.json(new ApiRes(200, null, "Task deleted"));
 });
 
 export const getDashboardData = asyncHandler(async (req, res) => {
@@ -107,5 +111,54 @@ export const getDashboardData = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, dashboardData, "Dashboard data fetched"));
+    .json(new ApiRes(200, dashboardData, "Dashboard data fetched"));
+});
+
+export const fetchProjectTasks = asyncHandler(async (req, res) => {
+  const { projectId, status } = req.query;
+
+  if (!projectId) {
+    throw new ApiError(400, "projectId is required");
+  }
+
+  const project = await Project.findById(projectId);
+
+  if (!project) {
+    throw new ApiError(404, "Project not found");
+  }
+
+  const isAdminOwner = project.createdBy.toString() === req.user.id;
+
+  const isMember = project.members.some(
+    (member) => member.toString() === req.user.id
+  );
+
+  if (!isAdminOwner && !isMember) {
+    throw new ApiError(403, "Not authorized to access tasks");
+  }
+
+  const filter = { projectId };
+
+  if (status) {
+    filter.status = status;
+  }
+
+  const tasks = await Task.find(filter)
+    .populate("assignedTo", "name email")
+    .sort({ createdAt: -1 });
+
+  return res
+    .status(200)
+    .json(new ApiRes(200, tasks, "Tasks fetched successfully"));
+});
+
+export const fetchAllUsers = asyncHandler(async (req, res) => {
+  const users = await User.find(
+    { role: "member" },
+    "-password -refreshToken"
+  ).sort({ createdAt: -1 });
+
+  return res
+    .status(200)
+    .json(new ApiRes(200, users, "Users fetched successfully"));
 });

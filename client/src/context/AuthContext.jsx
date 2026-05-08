@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import axios from "./axios";
+import api from "./axios";
 
 const AuthContext = createContext();
 
@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const res = await API.get("/current-user");
+        const res = await api.get("/current-user");
         setUser(res.data.data);
       } catch (err) {
         console.log("Not logged in");
@@ -22,27 +22,23 @@ export const AuthProvider = ({ children }) => {
     loadUser();
   }, []);
 
-  // 🔹 Register
+  // Register
   const register = async (formData) => {
     try {
-      const res = await axios.post("/register", formData);
+      const res = await api.post("/register", formData);
       return res.data;
     } catch (error) {
       throw error.response?.data || error.message;
     }
   };
 
-  // 🔹 Login
+  // Login
   const login = async (formData) => {
     try {
-      const res = await axios.post("/login", formData);
+      const res = await api.post("/login", formData);
 
-      const { accessToken, user } = res.data.data;
+      const { user } = res.data.data;
 
-      // Save token
-      localStorage.setItem("token", accessToken);
-
-      // Set user
       setUser(user);
 
       return res.data;
@@ -51,10 +47,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // 🔹 Logout
-  const logout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
+  // Logout
+  const logout = async () => {
+    try {
+      await api.post("/logout");
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setUser(null);
+    }
   };
 
   return (
@@ -73,5 +74,5 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// 🔹 Custom hook
+// Custom hook
 export const useAuth = () => useContext(AuthContext);

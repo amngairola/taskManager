@@ -7,7 +7,10 @@ import Dashboard from "./pages/Dashboard";
 import ProjectPage from "./pages/ProjectPage";
 import { useAuth } from "./context/AuthContext";
 
-// 🔹 Protected Route
+import "react-toastify/dist/ReactToastify.css";
+import { ToastContainer } from "react-toastify";
+
+// Protected Route
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
 
@@ -16,7 +19,7 @@ function ProtectedRoute({ children }) {
   return user ? children : <Navigate to="/login" replace />;
 }
 
-// 🔹 Public Route (prevent logged-in users from going to login/register)
+// Public Route
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
 
@@ -25,7 +28,7 @@ function PublicRoute({ children }) {
   return !user ? children : <Navigate to="/dashboard" replace />;
 }
 
-// 🔹 404 Page
+//  404 Page
 function NotFound() {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-100">
@@ -92,6 +95,14 @@ export default function App() {
         {/* 🔹 404 */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        theme="colored"
+      />
     </BrowserRouter>
   );
 }
