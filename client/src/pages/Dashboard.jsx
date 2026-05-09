@@ -5,7 +5,7 @@ import api from "./../context/axios";
 import { toast } from "react-hot-toast";
 
 export default function Dashboard() {
-  const { user, isAdmin, loading } = useAuth();
+  const { user, isAdmin, loading, logout } = useAuth();
   const [projects, setProjects] = useState([]);
   const [pageLoading, setPageLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -33,6 +33,19 @@ export default function Dashboard() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+
+      toast.success("Logout successful");
+
+      navigate("/login");
+    } catch (error) {
+      console.error(error);
+
+      toast.error("Logout failed");
+    }
+  };
   const SkeletonCard = () => (
     <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-5 animate-pulse">
       <div className="h-5 w-2/3 bg-zinc-800 rounded mb-3"></div>
@@ -91,25 +104,57 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans selection:bg-indigo-500/30">
-      {/*  Premium Navbar */}
       <nav className="sticky top-0 z-40 border-b border-zinc-800 bg-black/60 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          {/* Left Side: Brand */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center font-bold">
+            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-600/20">
               T
             </div>
-            <h1 className="text-lg font-semibold tracking-tight">Taskr.io</h1>
+            <h1 className="text-lg font-semibold tracking-tight text-white">
+              Taskr.io
+            </h1>
           </div>
+
+          {/* Right Side: User Profile & Actions */}
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium">{user?.name}</p>
+              <p className="text-sm font-medium text-zinc-200">{user?.email}</p>
               <p className="text-xs text-zinc-500 capitalize">
                 {isAdmin ? "Admin" : "Member"}
               </p>
             </div>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-zinc-800 to-zinc-700 border border-zinc-700 flex items-center justify-center text-sm font-bold uppercase">
+
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-zinc-800 to-zinc-700 border border-zinc-700 flex items-center justify-center text-sm font-bold uppercase text-white">
               {user?.name?.[0]}
             </div>
+
+            {/* Vertical Divider */}
+            <div className="h-6 w-px bg-zinc-800 mx-1 hidden sm:block" />
+
+            {/* Improved Logout Button */}
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-500/10 transition-all duration-200 group"
+              title="Sign out"
+            >
+              <span className="text-sm font-medium hidden md:block">
+                Logout
+              </span>
+              <svg
+                className="w-5 h-5 transition-transform group-hover:translate-x-0.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
+              </svg>
+            </button>
           </div>
         </div>
       </nav>
@@ -135,58 +180,125 @@ export default function Dashboard() {
           )}
         </header>
 
-        {/*  Projects Grid */}
+        {/* Projects Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {pageLoading ? (
             Array(6)
               .fill(0)
               .map((_, i) => <SkeletonCard key={i} />)
           ) : projects.length > 0 ? (
-            projects.map((project) => (
-              <div
-                key={project._id}
-                className="group relative bg-zinc-900 border border-zinc-800 p-6 rounded-2xl transition-all duration-300 hover:border-zinc-700 hover:bg-zinc-900/80 hover:shadow-2xl hover:shadow-indigo-500/5"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-lg font-semibold group-hover:text-indigo-400 transition-colors">
-                    {project.title}
-                  </h3>
-                  <span className="px-2 py-1 bg-zinc-800 text-[10px] uppercase tracking-wider rounded font-bold text-zinc-400">
-                    Active
-                  </span>
-                </div>
-                <p className="text-zinc-400 text-sm leading-relaxed mb-6 line-clamp-2">
-                  {project.description ||
-                    "No description provided for this project."}
-                </p>
+            projects.map((project) => {
+              const isCompleted = project.status === "done"; // Adjust based on your API logic
 
-                <Link
-                  to={`/project/${project._id}`}
-                  className="inline-flex items-center text-sm font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
+              return (
+                <div
+                  key={project._id}
+                  className={`group relative bg-zinc-900 border border-zinc-800 p-6 rounded-2xl transition-all duration-300 hover:border-zinc-700 hover:bg-zinc-900/80 hover:shadow-2xl hover:shadow-indigo-500/5 overflow-hidden ${
+                    isCompleted ? "opacity-90" : ""
+                  }`}
                 >
-                  View Workspace
-                  <svg
-                    className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                  {/* Top Status Border */}
+                  <div
+                    className={`absolute top-0 left-0 w-full h-1 transition-colors duration-300 ${
+                      isCompleted
+                        ? "bg-emerald-500"
+                        : "bg-indigo-600 group-hover:bg-indigo-400"
+                    }`}
+                  />
+
+                  <div className="flex justify-between items-start mb-4 gap-2">
+                    <h3
+                      className={`text-lg font-semibold transition-colors duration-300 ${
+                        isCompleted
+                          ? "text-zinc-400 line-through"
+                          : "text-zinc-100 group-hover:text-indigo-400"
+                      }`}
+                    >
+                      {project.title}
+                    </h3>
+
+                    {/* Dynamic Status Indicator Badge */}
+                    <span
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors duration-300 ${
+                        isCompleted
+                          ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
+                          : "bg-zinc-800 text-zinc-400 border border-zinc-700"
+                      }`}
+                    >
+                      {isCompleted ? (
+                        <>
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="3"
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                          Done
+                        </>
+                      ) : (
+                        <>
+                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                          Active
+                        </>
+                      )}
+                    </span>
+                  </div>
+
+                  <p
+                    className={`text-sm leading-relaxed mb-6 line-clamp-2 transition-colors duration-300 ${
+                      isCompleted ? "text-zinc-600" : "text-zinc-400"
+                    }`}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M14 5l7 7m0 0l-7 7m7-7H3"
-                    />
-                  </svg>
-                </Link>
-              </div>
-            ))
+                    {project.description ||
+                      "No description provided for this project."}
+                  </p>
+
+                  <div className="flex items-center justify-between mt-auto">
+                    <Link
+                      to={`/project/${project._id}`}
+                      className={`inline-flex items-center text-sm font-semibold transition-colors ${
+                        isCompleted
+                          ? "text-zinc-500 hover:text-emerald-400"
+                          : "text-indigo-400 hover:text-indigo-300"
+                      }`}
+                    >
+                      View Workspace
+                      <svg
+                        className="w-4 h-4 ml-1.5 transform group-hover:translate-x-1 transition-transform"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M14 5l7 7m0 0l-7 7m7-7H3"
+                        />
+                      </svg>
+                    </Link>
+
+                    {/* Subtle Progress Text */}
+                    <span className="text-[10px] font-medium text-zinc-600 uppercase tracking-widest">
+                      {isCompleted ? "100% complete" : "In Progress"}
+                    </span>
+                  </div>
+                </div>
+              );
+            })
           ) : (
             <EmptyState />
           )}
         </div>
 
-        {/* 🔹 Modern Modal Form */}
+        {/*   Modal Form */}
         {showForm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/60">
             <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">

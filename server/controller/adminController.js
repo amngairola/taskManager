@@ -4,6 +4,7 @@ import ApiError from "../utils/apiErr.utils.js";
 
 import { Task } from "../models/task.model.js";
 import { Project } from "../models/project.model.js";
+import { User } from "./../models/user.model.js";
 
 export const createProject = asyncHandler(async (req, res) => {
   const { title, description, members } = req.body;
@@ -37,7 +38,10 @@ export const createTask = asyncHandler(async (req, res) => {
   if (project.createdBy.toString() !== req.user.id) {
     throw new ApiError(403, "Not allowed");
   }
-
+  if (assignedTo && !project.members.includes(assignedTo)) {
+    project.members.push(assignedTo);
+    await project.save();
+  }
   const task = await Task.create({
     title,
     description,
@@ -161,4 +165,25 @@ export const fetchAllUsers = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiRes(200, users, "Users fetched successfully"));
+});
+
+export const searchTasks = asyncHandler(async (req, res) => {
+  const { projectId, query } = req.query;
+  console.log("backend ---", query);
+
+  if (!projectId || !query) {
+    throw new ApiError(400, "projectId and query are required");
+  }
+
+  const tasks = await Task.find({
+    projectId,
+    title: {
+      $regex: query,
+      $options: "i",
+    },
+  })
+    .populate("assignedTo", "name email")
+    .sort({ createdAt: -1 });
+
+  return res.status(200).json(new ApiRes(200, tasks, "Matching tasks fetched"));
 });

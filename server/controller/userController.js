@@ -4,6 +4,7 @@ import ApiError from "../utils/apiErr.utils.js";
 import { asyncHandler } from "../utils/asyncHandler.utils.js";
 import { Task } from "../models/task.model.js";
 import { Project } from "../models/project.model.js";
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -127,9 +128,25 @@ export const getProjectById = asyncHandler(async (req, res) => {
 export const getTasks = asyncHandler(async (req, res) => {
   const { projectId } = req.query;
 
-  if (!projectId) throw new ApiError(400, "ProjectId required");
+  if (!projectId) {
+    throw new ApiError(400, "ProjectId required");
+  }
 
-  const tasks = await Task.find({ projectId });
+  const query = { projectId: new mongoose.Types.ObjectId(projectId) };
+
+  //only show task which are assign to cur user
+  if (req.user.role !== "admin") {
+    query.assignedTo = req.user.id;
+  }
+  // // console.log("Query:", query);
+
+  // // console.log("User ID type:", typeof req.user.id, req.user.id);
+
+  // // console.log("req.user:", req.user);
+
+  const tasks = await Task.find(query)
+    .populate("assignedTo", "name email")
+    .sort({ createdAt: -1 });
 
   res.json(new ApiRes(200, tasks));
 });
