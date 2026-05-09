@@ -2,11 +2,10 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import userRouter from "./routes/userRoutes.js";
-import adminRoutes from "./routes/adminRoutes.js"; // ✅ Add this import
+import adminRoutes from "./routes/adminRoutes.js";
 
 const app = express();
 
-// ✅ Middleware order matters
 app.use(
   cors({
     origin: process.env.CLIENT_URL,
