@@ -147,8 +147,8 @@ GET /api/admin/tasks/search
 
 ## Admin Login
 
-Email: [amangairola@gmail.com](mailto:amangairola@gmail.com)
-Password: 123456
+Email: [amangairola@gmail.com],(mailto:amangairola@gmail.com)
+Password: 123456 
 
 ---
 
@@ -156,9 +156,10 @@ Password: 123456
 
 ## Member Login
 
-Email: [member@gmail.com](mailto:member@gmail.com)
-Password: member123
+Email: [user1@gmail.com]
+Password: 123456 
 
+OR- create new member
 ---
 
 # Installation & Setup
