@@ -147,8 +147,8 @@ GET /api/admin/tasks/search
 
 ## Admin Login
 
-Email: [admin@gmail.com](mailto:admin@gmail.com)
-Password: admin123
+Email: [amangairola@gmail.com](mailto:amangairola@gmail.com)
+Password: 123456
 
 ---
 
