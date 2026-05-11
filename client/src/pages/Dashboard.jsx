@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import api from "./../context/axios";
 import { toast } from "react-hot-toast";
 import { useQueryClient, QueryClient, useQuery } from "@tanstack/react-query";
+import { fetchProjects } from "../utils.js";
 
 export default function Dashboard() {
   const { user, isAdmin, loading, logout } = useAuth();
@@ -17,6 +18,7 @@ export default function Dashboard() {
   };
 
   const queryClient = useQueryClient();
+
   const handleCreateProject = async (e) => {
     e.preventDefault();
 
@@ -27,7 +29,6 @@ export default function Dashboard() {
       toast.success("New Project created!");
 
       queryClient.invalidateQueries({ queryKey: ["projects"] });
-      // setProjects((prev) => [res.data.data, ...prev]);
       setForm({ title: "", description: "" });
       setShowForm(false);
     } catch (err) {
@@ -90,11 +91,6 @@ export default function Dashboard() {
     </div>
   );
 
-  const fetchProjects = async () => {
-    const res = await api.get("/projects");
-    return res.data.data;
-  };
-
   const {
     data: projects = [],
     isLoading,
@@ -102,13 +98,8 @@ export default function Dashboard() {
   } = useQuery({
     queryKey: ["projects"],
     queryFn: fetchProjects,
-
     staleTime: 1000 * 60 * 5,
   });
-  // useEffect(() => {
-
-  //   fetchProjects();
-  // }, []);
 
   if (isLoading) return null;
 

@@ -4,17 +4,17 @@ import { useParams, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import api from "../context/axios";
 import TaskCard from "../components/TaskCard";
-
-import { useQueryClient, QueryClient, useQuery } from "@tanstack/react-query";
+import TaskSkeleton from "../components/skeleton/TaskSkeleton";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import Loading from "./../components/Loading";
+import { fetchTasks, fetchUsers } from "../utils.js";
 export default function ProjectPage() {
   const { isAdmin, loading } = useAuth();
   const { id: projectId } = useParams();
 
   // ─── State ───────────────────────────────────────────────────────────────────
-  // const [tasks, setTasks] = useState([]);
-  const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
-  const [pageLoading, setPageLoading] = useState(true);
+
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [selectedColumn, setSelectedColumn] = useState("todo");
 
@@ -33,32 +33,29 @@ export default function ProjectPage() {
     { id: "done", label: "Completed", color: "bg-emerald-500" },
   ];
 
-  // ─── API Calls ───────────────────────────────────────────────────────────────
-  const fetchTasks = async () => {
-    try {
-      const res = await api.get(`/tasks?projectId=${projectId}`);
-      return res.data.data;
-    } catch (err) {
-      console.error("Fetch tasks error:", err);
-      toast.error("Failed to load tasks");
-    } finally {
-      setPageLoading(false);
-    }
-  };
-
-  const { data: tasks = [], isLoading } = useQuery({
+  // react queries
+  const { data: tasks = [], isLoading: tasksLoading } = useQuery({
     queryKey: ["task", projectId],
-    queryFn: fetchTasks,
-
+    queryFn: () => fetchTasks(projectId),
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 2,
+  });
+  const { data: users = [], isLoading: usersLoading } = useQuery({
+    queryKey: ["users"],
+    queryFn: fetchUsers,
+    refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 2,
   });
 
+  //axios api calls
   const searchTasks = async (taskName) => {
     try {
       const res = await api.get(
         `/admin/tasks/search?projectId=${projectId}&query=${taskName}`
       );
-      setTasks(res.data.data);
+
+      queryClient.setQueryData(["task", projectId], res.data.data);
+      // setTasks(res.data.data);
     } catch (err) {
       console.error("Search task error:", err);
       toast.error("Failed to search tasks");
@@ -68,9 +65,11 @@ export default function ProjectPage() {
   const updateStatus = async (taskId, status) => {
     try {
       const res = await api.put(`/tasks/${taskId}`, { status });
-      setTasks((prev) =>
+
+      queryClient.setQueryData(["task", projectId], (prev) =>
         prev.map((t) => (t._id === taskId ? res.data.data : t))
       );
+
       toast.success("Task status updated");
     } catch (err) {
       console.error("Update status error:", err);
@@ -113,7 +112,10 @@ export default function ProjectPage() {
 
     try {
       await api.delete(`/admin/delete/task/${taskId}`);
-      setTasks((prev) => prev.filter((t) => t._id !== taskId));
+      queryClient.setQueryData(["task", projectId], (prev) =>
+        prev.filter((t) => t._id !== taskId)
+      );
+
       toast.success("Task deleted");
     } catch (err) {
       console.error("Delete task error:", err);
@@ -121,30 +123,10 @@ export default function ProjectPage() {
     }
   };
 
-  // ─── Effects ─────────────────────────────────────────────────────────────────
-  // useEffect(() => {
-  //   if (!projectId) return;
-  //   fetchTasks();
-  // }, [projectId]);
-
+  //debounce method to search task
   useEffect(() => {
-    if (isAdmin) {
-      const fetchUsers = async () => {
-        try {
-          const res = await api.get("/admin/getAllusers");
-          setUsers(res.data.data);
-        } catch (err) {
-          console.error("Fetch users error:", err);
-        }
-      };
-      fetchUsers();
-    }
-  }, [isAdmin]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      search.trim() ? searchTasks(search) : fetchTasks();
-    }, 500);
+    if (!search.trim()) return;
+    const timer = setTimeout(() => searchTasks(search), 500);
 
     return () => clearTimeout(timer);
   }, [search]);
@@ -156,32 +138,9 @@ export default function ProjectPage() {
     setShowTaskForm(true);
   };
 
-  if (isLoading || loading || pageLoading) {
-    return (
-      <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-zinc-800 border-t-indigo-600 rounded-full animate-spin"></div>
-          <p className="text-zinc-500 text-sm font-medium animate-pulse">
-            Loading board...
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const isLoading = tasksLoading || usersLoading;
+  if (isLoading) return <Loading />;
 
-  const TaskSkeleton = () => (
-    <div className="bg-zinc-900/50 border border-zinc-800 p-5 rounded-xl animate-pulse space-y-4">
-      <div className="h-4 w-3/4 bg-zinc-800 rounded"></div>
-      <div className="space-y-2">
-        <div className="h-3 w-full bg-zinc-800 rounded"></div>
-        <div className="h-3 w-5/6 bg-zinc-800 rounded"></div>
-      </div>
-      <div className="flex justify-between items-center pt-4 border-t border-zinc-800/50">
-        <div className="h-6 w-16 bg-zinc-800 rounded"></div>
-        <div className="h-4 w-12 bg-zinc-800 rounded"></div>
-      </div>
-    </div>
-  );
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-100 pb-12">
       {/* Board Header */}

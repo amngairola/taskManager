@@ -68,12 +68,17 @@ The application is fully responsive and built with a modern SaaS-inspired UI usi
 
 ## Frontend Features
 
-* Responsive design
-* Modern dark SaaS UI
-* Toast notifications
-* Skeleton loaders
-* Lazy loading with React Suspense
-* Debounced search optimization
+*Frontend Features
+*Responsive design
+*Modern dark SaaS UI
+*Toast notifications
+*Skeleton loaders
+*Lazy loading with React Suspense
+*Debounced search optimization
+*Client-side caching using TanStack Query (React Query)
+*Automatic background refetching
+*Optimized API state management
+*Reduced redundant API calls for projects & tasks
 
 ---
 
@@ -86,6 +91,7 @@ The application is fully responsive and built with a modern SaaS-inspired UI usi
 * Tailwind CSS
 * Axios
 * React Toastify
+*TanStack Query (React Query)
 
 ## Backend
 
@@ -231,7 +237,11 @@ npm run dev
 * Role-based middleware
 * Efficient MongoDB querying
 * Task filtering on backend
-
+* Client-side caching using TanStack Query
+* Automatic query invalidation & refetching
+* Optimized server-state management
+* Reduced unnecessary API requests
+* Cached project & task data for faster navigation
 ---
 
 # Future Improvements
@@ -260,7 +270,8 @@ This project demonstrates:
 * Backend validation
 * Secure session handling
 * Modern frontend optimization techniques
-
+* Client-side caching & performance optimization
+* Scalable server-state management using TanStack Query
 ---
 
 # Developed By
