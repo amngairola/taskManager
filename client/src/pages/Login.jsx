@@ -149,9 +149,7 @@ export default function Login() {
         </div>
 
         {/* Footer info */}
-        <p className="mt-8 text-center text-[11px] text-zinc-600 uppercase tracking-widest font-medium">
-          Secure Cloud Infrastructure • SOC2 Compliant
-        </p>
+        <p className="mt-8 text-center text-[11px] text-zinc-600 uppercase tracking-widest font-medium"></p>
       </div>
     </div>
   );

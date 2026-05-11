@@ -37,7 +37,7 @@ export default function App() {
     <BrowserRouter>
       <Suspense fallback={<PageSkeleton />}>
         <Routes>
-          {/* 🔹 Public Routes */}
+          {/*  Public Routes */}
           <Route
             path="/login"
             element={

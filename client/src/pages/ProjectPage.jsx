@@ -1,21 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useParams, Link } from "react-router-dom";
-import { toast } from "react-hot-toast"; // ✅ Add this import
+import { toast } from "react-hot-toast";
 import api from "../context/axios";
 import TaskCard from "../components/TaskCard";
 
+import { useQueryClient, QueryClient, useQuery } from "@tanstack/react-query";
 export default function ProjectPage() {
   const { isAdmin, loading } = useAuth();
   const { id: projectId } = useParams();
 
   // ─── State ───────────────────────────────────────────────────────────────────
-  const [tasks, setTasks] = useState([]);
+  // const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [pageLoading, setPageLoading] = useState(true);
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [selectedColumn, setSelectedColumn] = useState("todo");
+
   const [taskForm, setTaskForm] = useState({
     title: "",
     description: "",
@@ -23,7 +25,7 @@ export default function ProjectPage() {
     dueDate: "",
     status: "todo",
   });
-
+  const queryClient = useQueryClient();
   // ─── Constants ───────────────────────────────────────────────────────────────
   const columns = [
     { id: "todo", label: "To Do", color: "bg-zinc-500" },
@@ -35,7 +37,7 @@ export default function ProjectPage() {
   const fetchTasks = async () => {
     try {
       const res = await api.get(`/tasks?projectId=${projectId}`);
-      setTasks(res.data.data);
+      return res.data.data;
     } catch (err) {
       console.error("Fetch tasks error:", err);
       toast.error("Failed to load tasks");
@@ -43,6 +45,13 @@ export default function ProjectPage() {
       setPageLoading(false);
     }
   };
+
+  const { data: tasks = [], isLoading } = useQuery({
+    queryKey: ["task", projectId],
+    queryFn: fetchTasks,
+
+    staleTime: 1000 * 60 * 2,
+  });
 
   const searchTasks = async (taskName) => {
     try {
@@ -79,7 +88,11 @@ export default function ProjectPage() {
         ...taskForm,
         projectId,
       });
-      setTasks((prev) => [res.data.data, ...prev]);
+      // setTasks((prev) => [res.data.data, ...prev]);
+
+      queryClient.invalidateQueries({
+        queryKey: ["task", projectId],
+      });
       setTaskForm({
         title: "",
         description: "",
@@ -109,10 +122,10 @@ export default function ProjectPage() {
   };
 
   // ─── Effects ─────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!projectId) return;
-    fetchTasks();
-  }, [projectId]);
+  // useEffect(() => {
+  //   if (!projectId) return;
+  //   fetchTasks();
+  // }, [projectId]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -143,7 +156,7 @@ export default function ProjectPage() {
     setShowTaskForm(true);
   };
 
-  if (loading || pageLoading) {
+  if (isLoading || loading || pageLoading) {
     return (
       <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">

@@ -3,11 +3,12 @@ import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
 import api from "./../context/axios";
 import { toast } from "react-hot-toast";
+import { useQueryClient, QueryClient, useQuery } from "@tanstack/react-query";
 
 export default function Dashboard() {
   const { user, isAdmin, loading, logout } = useAuth();
-  const [projects, setProjects] = useState([]);
-  const [pageLoading, setPageLoading] = useState(true);
+  // const [projects, setProjects] = useState([]);
+
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: "", description: "" });
 
@@ -15,16 +16,18 @@ export default function Dashboard() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const queryClient = useQueryClient();
   const handleCreateProject = async (e) => {
     e.preventDefault();
-    console.log("clicked---", form);
 
     if (!form.title) return toast.error("Title required");
 
     try {
       const res = await api.post("/admin/create/projects", form);
       toast.success("New Project created!");
-      setProjects((prev) => [res.data.data, ...prev]);
+
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      // setProjects((prev) => [res.data.data, ...prev]);
       setForm({ title: "", description: "" });
       setShowForm(false);
     } catch (err) {
@@ -87,20 +90,27 @@ export default function Dashboard() {
     </div>
   );
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const res = await api.get("/projects");
-        setProjects(res.data.data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setPageLoading(false);
-      }
-    };
-    fetchProjects();
-  }, []);
-  if (loading) return null;
+  const fetchProjects = async () => {
+    const res = await api.get("/projects");
+    return res.data.data;
+  };
+
+  const {
+    data: projects = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["projects"],
+    queryFn: fetchProjects,
+
+    staleTime: 1000 * 60 * 5,
+  });
+  // useEffect(() => {
+
+  //   fetchProjects();
+  // }, []);
+
+  if (isLoading) return null;
 
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans selection:bg-indigo-500/30">
@@ -182,7 +192,7 @@ export default function Dashboard() {
 
         {/* Projects Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {pageLoading ? (
+          {isLoading ? (
             Array(6)
               .fill(0)
               .map((_, i) => <SkeletonCard key={i} />)
