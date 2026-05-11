@@ -3,7 +3,7 @@ import api from "./context/axios";
 // ─── API Calls ───────────────────────────────────────────────────────────────
 export const fetchTasks = async (projectId) => {
   const res = await api.get(`/tasks?projectId=${projectId}`);
-  console.log("fetching task... ", a);
+  console.log("fetching task... ");
   return res.data.data;
 };
 
