@@ -5,6 +5,14 @@
 Frontend Live Link:
 https://taskm-amangairola.vercel.app
 
+⚠️ Important Note
+
+The backend server is deployed on Render (Free Tier).
+
+Since Render free instances automatically spin down after inactivity, the first API request may take around 30–50 seconds to respond while the server wakes up.
+
+Please wait a few moments during the initial load/login request if the application appears slow at first.
+
 ---
 
 # Project Overview
